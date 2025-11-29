@@ -1,0 +1,10 @@
+const express=require("express");
+const app=express();
+const cors=require("cors");
+const connectDB=require("./config/db");
+require("dotenv").config();
+app.use(cors());
+app.use(express.json());
+ connectDB();
+ app.use("/api",require("./routes/authRoutes"));
+ app.listen(5000,()=>console.log("Server running on port 5000"));
