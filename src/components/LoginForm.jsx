@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiMail, FiLock } from "react-icons/fi";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import Swal from 'sweetalert2';
 
 const LoginForm = () => {
     const navigate = useNavigate();
@@ -12,24 +15,52 @@ const LoginForm = () => {
 
     const validateForm = () => {
         let newErrors = {};
-        if (!email.trim()) {
-            newErrors.email = "Email is required";
-        } else if (!/\S+@\S+\.\S+/.test(email)) {
-            newErrors.email = "Enter a valid email ";
-        }
-        if (!password.trim()) {
-            newErrors.password = "Pasword is required";
-        } else if (password.length < 6) {
-            newErrors.password = "Password must be at least 6 characters";
-        }
+        if (!email.trim()) newErrors.email = "Email is required";
+        else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Enter a valid email ";
+
+        if (!password.trim()) newErrors.password = "Password is required";
+        else if (password.length < 6) newErrors.password = "Password must be at least 6 characters";
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
-        navigate("/dashboard");
+
+        try {
+            const res = await fetch("http://localhost:5000/api/auth/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: email, password })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                // SweetAlert for success
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: 'User Registered Successfully',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                toast.success("Redirecting to login...", { autoClose: 3000 });
+                setTimeout(() => navigate("/dashboard"), 2000); // Example redirect
+            } else {
+                // SweetAlert for backend error
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.error || 'Something went wrong'
+                });
+            }
+        } catch (err) {
+            console.log(err);
+            toast.error("Backend not reachable!");
+        }
     };
 
     return (
@@ -42,72 +73,45 @@ const LoginForm = () => {
                     justifyContent: "center",
                     alignItems: "center",
                     background: "linear-gradient(135deg,#0c88a7,#4b494e)",
-                    padding: "-20px",
                     fontFamily: "Poppins, sans-serif",
                 }}
             >
-                <h1
-                    style={{
-                        color: "white",
-                        marginBottom: "20px",
-                        fontSize: "32px",
-                        letterSpacing: "1px",
-                        fontWeight: "600",
-                        textShadow: "0 3px 8px rgba(0,0,0,0.4)",
-                    }}
-                >
+                <h1 style={{
+                    color: "white",
+                    marginBottom: "20px",
+                    fontSize: "32px",
+                    letterSpacing: "1px",
+                    fontWeight: "600",
+                    textShadow: "0 3px 8px rgba(0,0,0,0.4)",
+                }}>
                     Admin Login
                 </h1>
-                <div
-                style={{
-                    width:"220px",
-                    height:"3px",
-                    background:"white",
-                    borderRadius:"2px",
-                    marginBottom:"25px",
-                      border: "1px solid #333",
-                    boxShadow:"0 2px 6px rgba(0,0,0,0.3"
-                }}
-                ></div>
 
-                <form
-                    onSubmit={handleSubmit}
-                    style={{
-                        width: "270px",
-                        minHeight: "320px",
-                        background: "#a1bed1",
-                        padding: "40px 30px",
-                         border: "1px solid #333",
-                        borderRadius: "5px",
-                        textAlign: "center",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "center",
-                        position: "relative",
-                    }}
-                >
-
-                    
+                <form onSubmit={handleSubmit} style={{
+                    width: "270px",
+                    minHeight: "320px",
+                    background: "#a1bed1",
+                    padding: "40px 30px",
+                    border: "1px solid #333",
+                    borderRadius: "5px",
+                    textAlign: "center",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                }}>
+                    {/* Email */}
                     <div style={{ position: "relative", marginBottom: "20px" }}>
-                        <FiMail
-                            size={18}
-                            style={{
-                                position: "absolute",
-                                top: "50%",
-                                left: "10px",
-                                transform: "translateY(-50%)",
-                                color: "white",
-                                background: "rgba(0,0,0,0.7)",
-                                padding: "5px",
-                                borderRadius: "4px",
-                            }}
-                        />
-
-                        <input
-                            type="email"
-                            placeholder="Enter Email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                        <FiMail size={18} style={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "10px",
+                            transform: "translateY(-50%)",
+                            color: "white",
+                            background: "rgba(0,0,0,0.7)",
+                            padding: "5px",
+                            borderRadius: "4px",
+                        }} />
+                        <input type="email" placeholder="Enter Email" value={email} onChange={(e) => setEmail(e.target.value)}
                             style={{
                                 width: "230px",
                                 padding: "12px 12px 12px 45px",
@@ -115,39 +119,25 @@ const LoginForm = () => {
                                 outline: "none",
                                 fontSize: "15px",
                                 borderRadius: "0px",
-                                background:"#fff"
-                            }}
-                            required
+                                background: "#fff"
+                            }} required
                         />
                     </div>
+                    {errors.email && <p style={{ color: "red", fontSize: "16px", marginBottom: "10px" }}>{errors.email}</p>}
 
-                    {errors.email && (
-                        <p style={{ color: "red", fontSize: "16px", marginBottom: "10px" }}>
-                            {errors.email}
-                        </p>
-                    )}
-
-                    
+                    {/* Password */}
                     <div style={{ position: "relative", marginBottom: "20px" }}>
-                        <FiLock
-                            size={18}
-                            style={{
-                                position: "absolute",
-                                top: "50%",
-                                left: "10px",
-                                transform: "translateY(-50%)",
-                                color: "white",
-                                background: "rgba(0,0,0,0.7)",
-                                padding: "5px",
-                                borderRadius: "4px",
-                            }}
-                        />
-
-                        <input
-                            type="password"
-                            placeholder="Enter Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                        <FiLock size={18} style={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "10px",
+                            transform: "translateY(-50%)",
+                            color: "white",
+                            background: "rgba(0,0,0,0.7)",
+                            padding: "5px",
+                            borderRadius: "4px",
+                        }} />
+                        <input type="password" placeholder="Enter Password" value={password} onChange={(e) => setPassword(e.target.value)}
                             style={{
                                 width: "230px",
                                 padding: "12px 12px 12px 45px",
@@ -155,50 +145,37 @@ const LoginForm = () => {
                                 outline: "none",
                                 fontSize: "15px",
                                 borderRadius: "0px",
-                                background:"#fff"
-                            }}
-                            required
+                                background: "#fff"
+                            }} required
                         />
                     </div>
+                    {errors.password && <p style={{ color: "red", fontSize: "16px", marginBottom: "10px" }}>{errors.password}</p>}
 
-                    {errors.password && (
-                        <p style={{ color: "red", fontSize: "16px", marginBottom: "10px" }}>
-                            {errors.password}
-                        </p>
-                    )}
-
-                    
-                    <button
-                        type="submit"
+                    {/* Submit Button */}
+                    <button type="submit"
                         onMouseEnter={() => setIsHover(true)}
-                        onMouseLeave={() => {
-                            setIsHover(false);
-                            setIsActive(false);
-                        }}
+                        onMouseLeave={() => { setIsHover(false); setIsActive(false); }}
                         onMouseDown={() => setIsActive(true)}
                         onMouseUp={() => setIsActive(false)}
                         style={{
                             width: "290px",
                             padding: "10px",
-                            background: isActive
-                                ? "#3d4daa"
-                                : isHover
-                                    ? "#1e1c3a"
-                                    : "#6e8efb",
+                            background: isActive ? "#3d4daa" : isHover ? "#1e1c3a" : "#6e8efb",
                             color: "#fff",
                             fontSize: "16px",
                             borderRadius: "0px",
-                            border: "none",
+                            border: "1px solid #333",
                             cursor: "pointer",
-                             border: "1px solid #333",
                             transition: "0.3s",
                             transform: isHover ? "scale(1.05)" : "scale(1)",
-                        }}
-                    >
+                        }}>
                         Login
                     </button>
                 </form>
             </div>
+
+            {/* Toast Container */}
+            <ToastContainer position="top-right" />
         </>
     );
 };

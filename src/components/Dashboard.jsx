@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+
+import "../App.css"
 import {
   FaUserCircle,
   FaShieldAlt,
@@ -17,14 +19,43 @@ import { MdPolicy, MdOutlinePublishedWithChanges } from "react-icons/md";
 import { GrSchedules } from "react-icons/gr";
 import { LuNotebookText } from "react-icons/lu";
 import { PiStudentDuotone } from "react-icons/pi";
+import Swal from "sweetalert2";
+const Toast = Swal.mixin({
+  toast: true,
+  position: "top-right",
+  showConfirmButton: false,
+  timer: 2000,
+  timerProgressBar: true,
+}
+)
 
 const Dashboard = () => {
+  const tdStyle = {
+    padding: "8px",
+    borderBottom: "1px solid #333",
+    fontWeight: "bold",
+    width: "40%",
+  };
+
+  const valStyle = {
+    padding: "8px",
+    borderBottom: "1px solid #333",
+    color: "#ccc",
+  };
+
   const [activeSection, setActiveSection] = useState("dashboard");
   const [students, setStudents] = useState([]);
   const [activeStudentPage, setActiveStudentPage] = useState("list");
 
   const [newStudent, setNewStudent] = useState("");
   const [showLeadForm, setShowLeadForm] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
+
+  const [errors, setErrors] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  //const [showModal, setShowModal] = useState(false);
+  const [savedLead, setSavedLead] = useState(null);
 
   const [leadDetails, setLeadDetails] = useState({
     name: "",
@@ -32,7 +63,7 @@ const Dashboard = () => {
     phone: "",
     city: "",
     address: "",
-    Source: "",
+    Source: "Pending",
     Status: "",
     Assigned_to: "",
     Notes: "",
@@ -40,18 +71,77 @@ const Dashboard = () => {
     date_created: "",
   });
 
+
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
     setLeadDetails({
       ...leadDetails,
-      [e.target.name]: e.target.value,
+      [name]: value,
+    });
+
+    setErrors({
+      ...errors,
+      [name]: "",
     });
   };
 
-  const [searchQuery, setSearchQuery] = useState("");
 
   const submitLead = (e) => {
     e.preventDefault();
-    setStudents([...students, leadDetails]);
+
+    let newErrors = {};
+
+    const requiredFields = [
+      "name",
+      "email",
+      "phone",
+      "city",
+      "Source",
+      "Status",
+      "Assigned_to",
+      "Notes",
+      "Follow_up",
+      "date_created",
+    ];
+
+
+    requiredFields.forEach((field) => {
+      if (!leadDetails[field] || leadDetails[field].trim() === "") {
+        newErrors[field] = ` ${field} is required`;
+      }
+    });
+
+
+    if (leadDetails.email && !/\S+@\S+\.\S+/.test(leadDetails.email)) {
+      newErrors.email = "Invalid email format";
+    }
+
+    if (leadDetails.phone && leadDetails.phone.length !== 10) {
+      newErrors.phone = "Phone must be 10 digits";
+    }
+
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+
+    setErrors({});
+    setSavedLead(leadDetails);
+    setShowModal(true);
+
+    if (editIndex !== null) {
+      const updated = [...students];
+      updated[editIndex] = leadDetails;
+      setStudents(updated);
+      setEditIndex(null);
+    } else {
+      setStudents([...students, leadDetails]);
+    }
+
+
     setLeadDetails({
       name: "",
       email: "",
@@ -65,8 +155,39 @@ const Dashboard = () => {
       Follow_up: "",
       date_created: "",
     });
+
     setShowLeadForm(false);
   };
+
+
+  const handleEditLead = (index) => {
+    setLeadDetails(students[index]);
+    setEditIndex(index);
+    setActiveStudentPage("add");
+  };
+
+
+  const handleDeleteLead = (index) => {
+    Swal.fire({
+      title: "Delete Lead?",
+      text: "Are you sure you want to delete this lead?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setStudents((prev) => prev.filter((_, i) => i !== index));
+
+        Toast.fire({
+          icon: "success",
+          title: "Lead deleted successfully!",
+        });
+      }
+    });
+  };
+
 
   const addStudent = (e) => {
     e.preventDefault();
@@ -74,6 +195,7 @@ const Dashboard = () => {
     setStudents([...students, newStudent.trim()]);
     setNewStudent("");
   };
+
 
   return (
     <div
@@ -84,7 +206,7 @@ const Dashboard = () => {
         backgroundColor: "#131212",
       }}
     >
-      {/* LEFT SIDEBAR */}
+
       <aside
         style={{
           width: "180px",
@@ -112,7 +234,7 @@ const Dashboard = () => {
             <span style={{ color: "#09319e" }}>Admin</span>
           </h1>
 
-          {/* Sidebar Menu */}
+
           <nav
             style={{
               display: "flex",
@@ -131,7 +253,7 @@ const Dashboard = () => {
 
           <hr style={{ border: "0.5px solid #333", margin: "20px 0" }} />
 
-          {/* Bottom Menu */}
+
           <nav
             style={{
               display: "flex",
@@ -224,21 +346,22 @@ const Dashboard = () => {
             {/* Dashboard Cards */}
 
 
-            <div 
-            style={{
-               display: "grid", 
-               gridTemplateColumns: 
-                window.innerWidth <= 600
-        ? "repeat(1, 1fr)"
-        : window.innerWidth <= 1024
-        ? "repeat(2, 1fr)"
-        : "repeat(4, 1fr)",
-               gap: "22px" 
-               }}
-               >
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  window.innerWidth <= 600
+                    ? "repeat(1, 1fr)"
+                    : window.innerWidth <= 1024
+                      ? "repeat(2, 1fr)"
+                      : "repeat(4, 1fr)",
+                gap: "22px"
+              }}
+            >
 
               {/* Total Students */}
-              <div style={card}>
+              <div className="card" style={card}>
                 <div style={cardHeader}>
                   <FaUsers size={28} color="#00ff6a" />
                   <h3>420</h3>
@@ -250,7 +373,7 @@ const Dashboard = () => {
               </div>
 
               {/* Total Teachers */}
-              <div style={card}>
+              <div className="card" style={card}>
                 <div style={cardHeader}>
                   <FaChalkboardTeacher size={28} color="#007bff" />
                   <h3>35</h3>
@@ -262,7 +385,7 @@ const Dashboard = () => {
               </div>
 
               {/* Active Courses */}
-              <div style={card}>
+              <div className="card" style={card}>
                 <div style={cardHeader}>
                   <FaBookOpen size={28} color="#ffa500" />
                   <h3>50</h3>
@@ -274,7 +397,7 @@ const Dashboard = () => {
               </div>
 
               {/* Pending Admissions */}
-              <div style={card}>
+              <div className="card" style={card}>
                 <div style={cardHeader}>
                   <FaUserClock size={28} color="#ff4444" />
                   <h3>12</h3>
@@ -285,6 +408,8 @@ const Dashboard = () => {
                 </p>
               </div>
             </div>
+
+
 
             {/* Graph + Activities */}
             <div style={{ display: "flex", marginTop: "35px", gap: "25px" }}>
@@ -309,7 +434,7 @@ const Dashboard = () => {
                   padding: "20px",
                   borderRadius: "12px",
                   height: "300px",
-                      height: "auto",
+                  height: "auto",
                   border: "2px solid #333",
                   width: "100%",
                   boxSizing: "border-box",
@@ -402,25 +527,32 @@ const Dashboard = () => {
                   style={{
                     display: "flex",
 
-                    justifyContent: "flex-end",
+                    gap: "10px",
                     alignItems: "center",
                     marginBottom: "15px",
+                    justifyContent: "space-between"
                   }}
                 >
-                  {/* <input
-                    type="text"
-                    placeholder="Search student..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                  {/* STATUS DROPDOWN */}
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
                     style={{
                       padding: "10px",
-                     width:"80px",
-                      borderRadius: "6px",
-                      border: "1px solid #333",
-                      backgroundColor: "#0d0d0d",
+                      backgroundColor: "#1a1a1a",
                       color: "white",
+                      border: "1px solid #333",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      width: "150px",
                     }}
-                  />*/}
+                  >
+                    <option value="">All Status</option>
+                    <option value="Success">Process</option>
+                    <option value="Complete">Complete</option>
+                    <option value="Pending">Pending</option>
+                  </select>
+
 
                   {/* OPEN ADD PAGE */}
                   <button
@@ -445,21 +577,100 @@ const Dashboard = () => {
                     backgroundColor: "#0d0d0d",
                     padding: "15px",
                     borderRadius: "10px",
+                    overflow: "auto",
                   }}
                 >
                   {students.length === 0 ? (
-                    <p style={{ color: "gray" }}></p>
-                  ) : (
-                    students
-                      .filter((s) =>
-                        s.name?.toLowerCase().includes(searchQuery.toLowerCase())
-                      )
-                      .map((student, index) => (
-                        <p key={index}>
-                          👤 {student.name} — {student.phone}
-                        </p>
-                      ))
-                  )}
+            <p style={{ color: "gray" }}>No leads added yet.</p>
+          ) : (
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                tableLayout: "fixed",
+                textAlign: "left",
+                backgroundColor: "#111",
+                color: "white",
+              }}
+            >
+              <thead>
+                <tr>
+                  {[
+                    "Name",
+                    "Email",
+                    "Phone",
+                    "City",
+                    "Address",
+                    "Source",
+                    "Status",
+                    "Assigned To",
+                    "Notes",
+                    "Follow Up",
+                    "Date Created",
+                    "Action",
+                  ].map((head, i) => (
+                    <th
+                      key={i}
+                      style={{
+                        padding: "10px",
+                        border: "1px solid #333",
+                        backgroundColor: "#1a1a1a",
+                        fontWeight: "bold",
+                        textAlign: "center",
+                      }}
+                    >
+                      {head}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {students
+                  .filter((s) => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .map((student, index) => (
+                    <tr key={index}>
+                      {[
+                        student.name,
+                        student.email,
+                        student.phone,
+                        student.city,
+                        student.address,
+                        student.Source,
+                        student.Status,
+                        student.Assigned_to,
+                        student.Notes,
+                        student.Follow_up,
+                        student.date_created,
+                      ].map((val, i) => (
+                        <td
+                          key={i}
+                          style={{ padding: "8px", border: "1px solid #333", textAlign: "center" }}
+                        >
+                          {val}
+                        </td>
+                      ))}
+                      <td style={{ textAlign: "center" }}>
+                        <button
+                          onClick={() => handleDeleteLead(index)}
+                          style={{
+                            padding: "5px 10px",
+                            backgroundColor: "#ff4444",
+                            border: "none",
+                            color: "white",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          )}
+                      
+                      
                 </div>
               </>
             )}
@@ -474,16 +685,52 @@ const Dashboard = () => {
                 }}
               >
                 <h3 style={{ marginBottom: "20px" }}>Add New Lead</h3>
-
                 <form
-                  onSubmit={(e) => {
+                  onSubmit={async (e) => {
                     e.preventDefault();
-                    setStudents([...students, leadDetails]);
+
+                    const res = await fetch("http://localhost:5000/api/leads/add", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(leadDetails),
+                    });
+
+                    const data = await res.json();
+                    if (editIndex === null) {
+                      leadDetails.Status = "Pending";
+                    }
+                    if (editIndex !== null) {
+
+                      setStudents((prev) =>
+                        prev.map((item, i) => (i === editIndex ? leadDetails : item))
+                      );
+                      setSavedLead(leadDetails);
+                      setShowModal(true);
+
+                      Toast.fire({
+                        icon: "success",
+                        title: "Lead Updated Successfully!",
+                      });
+
+                      setEditIndex(null);
+                    } else {
+                      //  ADD NEW LEAD
+                      setStudents((prev) => [...prev, leadDetails]);
+                      setSavedLead(leadDetails);
+                      setShowModal(true);
+                      Toast.fire({
+                        icon: "success",
+                        title: "Lead Added Successfully!",
+                      });
+                    }
+
+                    // RESET FORM
                     setLeadDetails({
                       name: "",
                       email: "",
                       phone: "",
                       city: "",
+                      address: "",
                       Source: "",
                       Status: "",
                       Assigned_to: "",
@@ -491,14 +738,18 @@ const Dashboard = () => {
                       Follow_up: "",
                       date_created: "",
                     });
+
                     setActiveStudentPage("list");
                   }}
+
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 1fr", // split into two columns
+                    gridTemplateColumns: "1fr 1fr",
                     gap: "15px",
                   }}
                 >
+
+
                   {/* Left column */}
                   <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
                     <input
@@ -507,89 +758,153 @@ const Dashboard = () => {
                       placeholder="Name"
                       value={leadDetails.name}
                       onChange={handleChange}
-                      style={formInput}
+                      style={{
+                        ...formInput,
+                        border: errors.name ? "1px solid red" : "1px solid #ccc",
+                      }}
                     />
+                    {errors.name && (
+                      <span style={{ color: "red", fontSize: "12px" }}>{errors.name}</span>
+                    )}
                     <input
                       type="email"
                       name="email"
                       placeholder="Email"
                       value={leadDetails.email}
                       onChange={handleChange}
-                      style={formInput}
+                      style={{
+                        ...formInput,
+                        border: errors.email ? "1px solid red" : "1px solid #ccc",
+                      }}
                     />
+                    {errors.email && (
+                      <span style={{ color: "red", fontSize: "12px" }}>{errors.email}</span>
+                    )}
                     <input
                       type="text"
                       name="phone"
                       placeholder="Phone Number"
                       value={leadDetails.phone}
                       onChange={handleChange}
-                      style={formInput}
+                      style={{
+                        ...formInput,
+                        border: errors.phone ? "1px solid red" : "1px solid #ccc",
+                      }}
                     />
+                    {errors.phone && (
+                      <span style={{ color: "red", fontSize: "12px" }}>{errors.phone}</span>
+                    )}
                     <input
                       type="text"
                       name="city"
                       placeholder="City"
                       value={leadDetails.city}
                       onChange={handleChange}
-                      style={formInput}
+                      style={{
+                        ...formInput,
+                        border: errors.city ? "1px solid red" : "1px solid #ccc",
+                      }}
                     />
+                    {errors.city && (
+                      <span style={{ color: "red", fontSize: "12px" }}>{errors.city}</span>
+                    )}
                     <input
                       type="text"
                       name="Source"
                       placeholder="Source"
                       value={leadDetails.Source}
                       onChange={handleChange}
-                      style={formInput}
+                      style={{
+                        ...formInput,
+                        border: errors.Source ? "1px solid red" : "1px solid #ccc",
+                      }}
                     />
+                    {errors.Source && (
+                      <span style={{ color: "red", fontSize: "12px" }}>{errors.Source}</span>
+                    )}
                   </div>
 
                   {/* Right column */}
                   <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-                    <input
-                      type="text"
+                    <select
                       name="Status"
-                      placeholder="Status"
                       value={leadDetails.Status}
                       onChange={handleChange}
-                      style={formInput}
-                    />
+                      style={{
+                        ...formInput,
+                        border: errors.Student ? "1px solid red" : "1px solid #ccc",
+                        backgroundColor: "#241e1efd",
+                      }}
+                    >
+                      <option value=""> Status </option>
+                      <option value="Success">Success</option>
+                      <option value="Complete">Complete</option>
+                      <option value="Pending">Pending</option>
+                    </select>
+
+                    {errors.Status && (
+                      <span style={{ color: "red", fontSize: "12px" }}>{errors.Status}</span>
+                    )}
+
                     <input
                       type="text"
                       name="Assigned_to"
                       placeholder="Assigned To"
                       value={leadDetails.Assigned_to}
                       onChange={handleChange}
-                      style={formInput}
+                      style={{
+                        ...formInput,
+                        border: errors.Assigned_to ? "1px solid red" : "1px solid #ccc",
+                      }}
                     />
+                    {errors.Assigned_to && (
+                      <span style={{ color: "red", fontSize: "12px" }}>{errors.Assigned_to}</span>
+                    )}
                     <textarea
                       name="Notes"
                       placeholder="Notes"
                       value={leadDetails.Notes}
                       onChange={handleChange}
-                      style={{ ...formInput, height: "20px" }}
+                      style={{ ...formInput, border: errors.Notes ? "1px solid red" : "1px solid #ccc", height: "20px" }}
                     />
+                    {errors.Notes && (
+                      <span style={{ color: "red", fontSize: "12px" }}>{errors.Notes}</span>
+                    )}
                     <input
                       type="text"
                       name="Follow_up"
                       placeholder="Follow Up"
                       value={leadDetails.Follow_up}
                       onChange={handleChange}
-                      style={formInput}
+                      style={{
+                        ...formInput,
+                        border: errors.Follow_up ? "1px solid red" : "1px solid #ccc",
+                      }}
                     />
+                    {errors.Follow_up && (
+                      <span style={{ color: "red", fontSize: "12px" }}>{errors.Follow_up}</span>
+                    )}
                     <input
                       type="date"
                       name="date_created"
                       placeholder="Date Created"
                       value={leadDetails.date_created}
                       onChange={handleChange}
-                      style={formInput}
+                      style={{
+                        ...formInput,
+                        border: errors.date_created ? "1px solid red" : "1px solid #ccc",
+                      }}
                     />
+                    {errors.date_created && (
+                      <span style={{ color: "red", fontSize: "12px" }}>{errors.date_created}</span>
+                    )}
                   </div>
 
 
                   <div style={{ display: "flex", gap: "10px" }}>
-                    <button
-                      type="submit"
+                    <button type="submit"
+
+                      //onClick={() => setActiveStudentPage("list")}
                       style={{
                         padding: "10px 20px",
                         backgroundColor: "#00ff6a",
@@ -602,24 +917,31 @@ const Dashboard = () => {
                     >
                       Save Lead
                     </button>
-
                     <button
                       type="button"
-                      onClick={() => setActiveStudentPage("list")}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveStudentPage("list");
+                      }}
                       style={{
                         padding: "10px 20px",
-                        backgroundColor: "#ff4444",
-                        color: "white",
+                        backgroundColor: "#00ff6a",
+                        color: "black",
                         border: "none",
                         borderRadius: "6px",
                         cursor: "pointer",
+                        fontWeight: "bold",
                       }}
                     >
                       Cancel
                     </button>
+                    
+
                   </div>
                 </form>
+
               </div>
+
             )}
           </>
         )}
@@ -627,7 +949,6 @@ const Dashboard = () => {
     </div>
   );
 };
-
 // Reusable Styles
 const menuBtn = {
   background: "transparent",
