@@ -19,6 +19,8 @@ import { MdPolicy, MdOutlinePublishedWithChanges } from "react-icons/md";
 import { GrSchedules } from "react-icons/gr";
 import { LuNotebookText } from "react-icons/lu";
 import { PiStudentDuotone } from "react-icons/pi";
+import { MdDelete } from "react-icons/md";
+import { CiEdit } from "react-icons/ci";
 import Swal from "sweetalert2";
 const Toast = Swal.mixin({
   toast: true,
@@ -46,10 +48,11 @@ const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [students, setStudents] = useState([]);
   const [activeStudentPage, setActiveStudentPage] = useState("list");
-
+  const [name, setName] = useState("");
   const [newStudent, setNewStudent] = useState("");
   const [showLeadForm, setShowLeadForm] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   const [errors, setErrors] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,12 +66,10 @@ const Dashboard = () => {
     phone: "",
     city: "",
     address: "",
-    Source: "Pending",
     Status: "",
-    Assigned_to: "",
-    Notes: "",
     Follow_up: "",
-    date_created: "",
+    Assigned_to: "",
+    date_created: ""
   });
 
 
@@ -97,12 +98,11 @@ const Dashboard = () => {
       "email",
       "phone",
       "city",
-      "Source",
-      "Status",
+      //"address",
       "Assigned_to",
-      "Notes",
       "Follow_up",
-      "date_created",
+      "Status",
+      "Date_creates",
     ];
 
 
@@ -147,13 +147,11 @@ const Dashboard = () => {
       email: "",
       phone: "",
       city: "",
-      address: "",
-      Source: "",
-      Status: "",
+      //address: "",
       Assigned_to: "",
-      Notes: "",
       Follow_up: "",
-      date_created: "",
+      Status: "",
+      date_created: ""
     });
 
     setShowLeadForm(false);
@@ -301,6 +299,8 @@ const Dashboard = () => {
             display: "flex",
             justifyContent: "flex-start",
             marginBottom: "20px",
+            alignItems: "center",
+            gap: "20px",
           }}
         >
           <div
@@ -311,7 +311,7 @@ const Dashboard = () => {
               border: "1px solid #333",
               borderRadius: "8px",
               padding: "5px 10px",
-              width: "320px",
+              width: "250px",
               gap: "10px",
             }}
           >
@@ -332,6 +332,40 @@ const Dashboard = () => {
               }}
             />
           </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{
+              padding: "10px",
+              backgroundColor: "#1a1a1a",
+              color: "white",
+              border: "1px solid #333",
+              borderRadius: "6px",
+              cursor: "pointer",
+              width: "150px",
+            }}
+          >
+            <option value="">All Status</option>
+            <option value="Procces">Procces</option>
+            <option value="Complete">Complete</option>
+            <option value="Pending">Pending</option>
+          </select>
+
+          {/* ADD LEAD BUTTON */}
+          <button
+            onClick={() => setActiveStudentPage("add")}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#292768",
+              border: "none",
+              color: "white",
+              borderRadius: "6px",
+              cursor: "pointer",
+              marginLeft: "200px"
+            }}
+          >
+            Add Lead
+          </button>
         </div>
 
         {activeSection === "dashboard" && (
@@ -526,15 +560,16 @@ const Dashboard = () => {
                 <div
                   style={{
                     display: "flex",
-
-                    gap: "10px",
+                    justifyContent: "flex-start",
                     alignItems: "center",
-                    marginBottom: "15px",
-                    justifyContent: "space-between"
+                    gap: "15px",
+                    marginBottom: "20px",
+
+
                   }}
                 >
                   {/* STATUS DROPDOWN */}
-                  <select
+                  {/*<select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                     style={{
@@ -545,6 +580,8 @@ const Dashboard = () => {
                       borderRadius: "6px",
                       cursor: "pointer",
                       width: "150px",
+                     
+        
                     }}
                   >
                     <option value="">All Status</option>
@@ -554,7 +591,7 @@ const Dashboard = () => {
                   </select>
 
 
-                  {/* OPEN ADD PAGE */}
+                  {/* OPEN ADD PAGE 
                   <button
                     onClick={() => setActiveStudentPage("add")}
                     style={{
@@ -568,7 +605,7 @@ const Dashboard = () => {
                     }}
                   >
                     Add Lead
-                  </button>
+                  </button>*/}
                 </div>
 
                 {/* STUDENTS LIST PAGE */}
@@ -581,96 +618,109 @@ const Dashboard = () => {
                   }}
                 >
                   {students.length === 0 ? (
-            <p style={{ color: "gray" }}>No leads added yet.</p>
-          ) : (
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                tableLayout: "fixed",
-                textAlign: "left",
-                backgroundColor: "#111",
-                color: "white",
-              }}
-            >
-              <thead>
-                <tr>
-                  {[
-                    "Name",
-                    "Email",
-                    "Phone",
-                    "City",
-                    "Address",
-                    "Source",
-                    "Status",
-                    "Assigned To",
-                    "Notes",
-                    "Follow Up",
-                    "Date Created",
-                    "Action",
-                  ].map((head, i) => (
-                    <th
-                      key={i}
+                    <p style={{ color: "gray" }}>No leads added yet.</p>
+                  ) : (
+                    <table
                       style={{
-                        padding: "10px",
-                        border: "1px solid #333",
-                        backgroundColor: "#1a1a1a",
-                        fontWeight: "bold",
-                        textAlign: "center",
+                        width: "100%",
+                        borderCollapse: "collapse",
+                        tableLayout: "fixed",
+                        textAlign: "left",
+                        backgroundColor: "#111",
+                        color: "white",
                       }}
                     >
-                      {head}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {students
-                  .filter((s) => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                  .map((student, index) => (
-                    <tr key={index}>
-                      {[
-                        student.name,
-                        student.email,
-                        student.phone,
-                        student.city,
-                        student.address,
-                        student.Source,
-                        student.Status,
-                        student.Assigned_to,
-                        student.Notes,
-                        student.Follow_up,
-                        student.date_created,
-                      ].map((val, i) => (
-                        <td
-                          key={i}
-                          style={{ padding: "8px", border: "1px solid #333", textAlign: "center" }}
-                        >
-                          {val}
-                        </td>
-                      ))}
-                      <td style={{ textAlign: "center" }}>
-                        <button
-                          onClick={() => handleDeleteLead(index)}
-                          style={{
-                            padding: "5px 10px",
-                            backgroundColor: "#ff4444",
-                            border: "none",
-                            color: "white",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          )}
-                      
-                      
+                      <thead>
+                        <tr>
+                          {[
+                            "Name",
+                            "Email",
+                            "Phone",
+                            "City",
+                           // "Address",
+                            "Assigned_to",
+                            "Follow_up",
+                            "Status",
+                            "Date Creates",
+                            "Action",
+                          ].map((head, i) => (
+                            <th
+                              key={i}
+                              style={{
+                                padding: "10px",
+                                border: "1px solid #333",
+                                backgroundColor: "#1a1a1a",
+                                fontWeight: "bold",
+                                textAlign: "center",
+                              }}
+                            >
+                              {head}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {students
+                          .filter((s) => s.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+                        (statusFilter === "" || s.Status ===statusFilter))
+                          .map((student, index) => (
+                            <tr key={index}>
+                              {[
+                                student.name,
+                                student.email,
+                                student.phone,
+                                student.city,
+                               // student.address,
+                                student.Assigned_to,
+                                student.Follow_up,
+
+                                student.Status,
+                                student.date_created,
+
+
+                              ].map((val, i) => (
+                                <td
+                                  key={i}
+                                  style={{ padding: "15px", border: "1px solid #333", textAlign: "center" }}
+                                >
+                                  {val}
+                                </td>
+                              ))}
+                              <td style={{ textAlign: "center" }}>
+                                <button
+                                  onClick={() => handleDeleteLead(index)}
+                                  style={{
+                                    padding: "3px 7px",
+                                    backgroundColor: "#ff4444",
+                                    border: "none",
+                                    color: "white",
+                                    borderRadius: "4px",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  <MdDelete />
+                                </button>
+                                <button
+                                  onClick={() => handleEditLead(index)}
+                                  style={{
+                                    padding: "3px 7px",
+                                    backgroundColor: "#44e9ff",
+                                    border: "none",
+                                    color: "white",
+                                    borderRadius: "4px",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  <CiEdit />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  )}
+
+
                 </div>
               </>
             )}
@@ -730,13 +780,11 @@ const Dashboard = () => {
                       email: "",
                       phone: "",
                       city: "",
-                      address: "",
-                      Source: "",
+                      //address: "",
                       Status: "",
-                      Assigned_to: "",
-                      Notes: "",
                       Follow_up: "",
-                      date_created: "",
+                      Assigned_to: "",
+                      date_created: ""
                     });
 
                     setActiveStudentPage("list");
@@ -778,7 +826,7 @@ const Dashboard = () => {
                       }}
                     />
                     {errors.email && (
-                      <span style={{ color: "red", fontSize: "12px" }}>{errors.email}</span>
+                      <span style={{ color: "red", fontSize: "12px", }}>{errors.email}</span>
                     )}
                     <input
                       type="text"
@@ -794,6 +842,7 @@ const Dashboard = () => {
                     {errors.phone && (
                       <span style={{ color: "red", fontSize: "12px" }}>{errors.phone}</span>
                     )}
+
                     <input
                       type="text"
                       name="city"
@@ -808,36 +857,21 @@ const Dashboard = () => {
                     {errors.city && (
                       <span style={{ color: "red", fontSize: "12px" }}>{errors.city}</span>
                     )}
-                    <input
-                      type="text"
-                      name="Source"
-                      placeholder="Source"
-                      value={leadDetails.Source}
-                      onChange={handleChange}
-                      style={{
-                        ...formInput,
-                        border: errors.Source ? "1px solid red" : "1px solid #ccc",
-                      }}
-                    />
-                    {errors.Source && (
-                      <span style={{ color: "red", fontSize: "12px" }}>{errors.Source}</span>
-                    )}
                   </div>
-
                   {/* Right column */}
                   <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
                     <select
                       name="Status"
-                      value={leadDetails.Status}
+                      value={leadDetails.Status || ""}
                       onChange={handleChange}
                       style={{
                         ...formInput,
-                        border: errors.Student ? "1px solid red" : "1px solid #ccc",
+                        border: errors.Status ? "1px solid red" : "1px solid #ccc",
                         backgroundColor: "#241e1efd",
                       }}
                     >
                       <option value=""> Status </option>
-                      <option value="Success">Success</option>
+                      <option value="Procces">Procces</option>
                       <option value="Complete">Complete</option>
                       <option value="Pending">Pending</option>
                     </select>
@@ -845,6 +879,7 @@ const Dashboard = () => {
                     {errors.Status && (
                       <span style={{ color: "red", fontSize: "12px" }}>{errors.Status}</span>
                     )}
+
 
                     <input
                       type="text"
@@ -860,16 +895,7 @@ const Dashboard = () => {
                     {errors.Assigned_to && (
                       <span style={{ color: "red", fontSize: "12px" }}>{errors.Assigned_to}</span>
                     )}
-                    <textarea
-                      name="Notes"
-                      placeholder="Notes"
-                      value={leadDetails.Notes}
-                      onChange={handleChange}
-                      style={{ ...formInput, border: errors.Notes ? "1px solid red" : "1px solid #ccc", height: "20px" }}
-                    />
-                    {errors.Notes && (
-                      <span style={{ color: "red", fontSize: "12px" }}>{errors.Notes}</span>
-                    )}
+
                     <input
                       type="text"
                       name="Follow_up"
@@ -900,14 +926,13 @@ const Dashboard = () => {
                     )}
                   </div>
 
-
                   <div style={{ display: "flex", gap: "10px" }}>
-                    <button type="submit"
 
-                      //onClick={() => setActiveStudentPage("list")}
+                    <button
+                      type="submit"
                       style={{
                         padding: "10px 20px",
-                        backgroundColor: "#00ff6a",
+                        backgroundColor: "#ff000d",
                         color: "black",
                         border: "none",
                         borderRadius: "6px",
@@ -915,18 +940,15 @@ const Dashboard = () => {
                         fontWeight: "bold",
                       }}
                     >
-                      Save Lead
+                    Save Lead
                     </button>
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setActiveStudentPage("list");
-                      }}
+                      onClick={() => setActiveStudentPage("list")}
                       style={{
                         padding: "10px 20px",
-                        backgroundColor: "#00ff6a",
-                        color: "black",
+                        backgroundColor: "#00ffb3",
+                        color: "white",
                         border: "none",
                         borderRadius: "6px",
                         cursor: "pointer",
@@ -935,13 +957,9 @@ const Dashboard = () => {
                     >
                       Cancel
                     </button>
-                    
-
                   </div>
                 </form>
-
               </div>
-
             )}
           </>
         )}

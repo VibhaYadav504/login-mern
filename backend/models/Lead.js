@@ -1,18 +1,20 @@
 import mongoose from "mongoose";
-const leadSchema =new mongoose.Schema({
-    name:String,
-    email:String,
-    phone:String,
-    city:String,
-    phone:String,
-    city:String,
-    Source:String,
-    Status:String,
-    Assigned_to:String,
-    Notes:String,
-    Follow_up:String,
-    date_created:String,
 
+const leadSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  phone: String,
+  city: String,
+  address: String,
+  source: String,
+  status: String,
+  assigned_to: String,
+  notes: String,
+  follow_up: String,
+  date_created: {
+    type: Date,
+    default: Date.now
+  }
+});
 
-},{timestamps:true});
-export default mongoose.model("Lead",leadSchema);
+export default mongoose.model("Lead", leadSchema);
