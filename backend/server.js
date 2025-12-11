@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/auth.js";
 import leadRoutes from "./routes/leadRoutes.js";
-
+import employeeRoutes from "./routes/employeeRoute.js"; 
 dotenv.config();
 
 const app = express();
@@ -20,5 +20,6 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/leads", leadRoutes);
+app.use("/api/employees", employeeRoutes); 
 
 app.listen(5000, () => console.log("Server running on port 5000"));

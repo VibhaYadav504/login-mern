@@ -21,6 +21,8 @@ import { LuNotebookText } from "react-icons/lu";
 import { PiStudentDuotone } from "react-icons/pi";
 import { MdDelete } from "react-icons/md";
 import { CiEdit } from "react-icons/ci";
+import { FaWhatsapp } from "react-icons/fa";
+import { FaPeopleGroup } from "react-icons/fa6";
 import Swal from "sweetalert2";
 const Toast = Swal.mixin({
   toast: true,
@@ -71,6 +73,26 @@ const Dashboard = () => {
     Assigned_to: "",
     date_created: ""
   });
+
+
+  const [activeEmployeePage, setActiveEmployeePage] = useState("list");
+  const [employees, setEmployees] = useState([]);
+  const employeeNameList = employees.map(
+    emp => emp.firstName + " " + emp.lastName
+  );
+  const [employeeDetails, setEmployeeDetails] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    dob: "",
+    doj: "",
+    remark: "",
+    joinTime: "",
+    designation: "",
+    address: "",
+  });
+
 
 
   const handleChange = (e) => {
@@ -185,6 +207,26 @@ const Dashboard = () => {
       }
     });
   };
+  const handleDeleteEmployee = (index) => {
+    Swal.fire({
+      title: "Delete Employee?",
+      text: "Are you sure you want to delete this employee?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setEmployees((prev) => prev.filter((_, i) => i !== index));
+
+        Toast.fire({
+          icon: "success",
+          title: "Employee deleted successfully!",
+        });
+      }
+    });
+  };
 
 
   const addStudent = (e) => {
@@ -194,6 +236,43 @@ const Dashboard = () => {
     setNewStudent("");
   };
 
+  // Single handleEmployeeChange function
+  const handleEmployeeChange = (e) => {
+    const { name, value } = e.target;
+    setEmployeeDetails((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEmployeeSubmit = (e) => {
+    e.preventDefault();
+
+    // Add new employee
+    setEmployees([...employees, employeeDetails]);
+
+    // Reset employee form
+    setEmployeeDetails({
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      dob: "",
+      doj: "",
+      remark: "",
+      joinTime: "",
+      designation: "",
+      address: "",
+    });
+
+    setActiveEmployeePage("list");
+  };
+
+  const handleEmployeeDelete = (index) => {
+    setEmployees(employees.filter((_, i) => i !== index));
+  };
+
+  const handleEmployeeEdit = (index) => {
+    setEmployeeDetails(employees[index]);
+    setActiveEmployeePage("add");
+  };
 
   return (
     <div
@@ -247,6 +326,10 @@ const Dashboard = () => {
             <button onClick={() => setActiveSection("students")} style={menuBtn}>
               <FaUserFriends /> Leads
             </button>
+            <button onClick={() => setActiveSection("employees")} style={menuBtn}>
+              <FaPeopleGroup /> Employees
+            </button>
+
           </nav>
 
           <hr style={{ border: "0.5px solid #333", margin: "20px 0" }} />
@@ -332,7 +415,7 @@ const Dashboard = () => {
               }}
             />
           </div>
-          <select
+          {/*<select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             style={{
@@ -349,24 +432,13 @@ const Dashboard = () => {
             <option value="Procces">Procces</option>
             <option value="Complete">Complete</option>
             <option value="Pending">Pending</option>
-          </select>
+          </select>*/}
 
           {/* ADD LEAD BUTTON */}
-          <button
-            onClick={() => setActiveStudentPage("add")}
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#292768",
-              border: "none",
-              color: "white",
-              borderRadius: "6px",
-              cursor: "pointer",
-              marginLeft: "200px"
-            }}
-          >
-            Add Lead
-          </button>
+
+
         </div>
+
 
         {activeSection === "dashboard" && (
           <>
@@ -569,7 +641,7 @@ const Dashboard = () => {
                   }}
                 >
                   {/* STATUS DROPDOWN */}
-                  {/*<select
+                  <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                     style={{
@@ -580,8 +652,8 @@ const Dashboard = () => {
                       borderRadius: "6px",
                       cursor: "pointer",
                       width: "150px",
-                     
-        
+
+
                     }}
                   >
                     <option value="">All Status</option>
@@ -591,7 +663,7 @@ const Dashboard = () => {
                   </select>
 
 
-                  {/* OPEN ADD PAGE 
+                  {/* OPEN ADD PAGE */}
                   <button
                     onClick={() => setActiveStudentPage("add")}
                     style={{
@@ -605,7 +677,7 @@ const Dashboard = () => {
                     }}
                   >
                     Add Lead
-                  </button>*/}
+                  </button>
                 </div>
 
                 {/* STUDENTS LIST PAGE */}
@@ -633,28 +705,31 @@ const Dashboard = () => {
                       <thead>
                         <tr>
                           {[
-                            "Name",
-                            "Email",
-                            "Phone",
-                            "City",
-                           // "Address",
-                            "Assigned_to",
-                            "Follow_up",
-                            "Status",
-                            "Date Creates",
-                            "Action",
-                          ].map((head, i) => (
+                            { head: "Name", width: "12%" },
+                            { head: "Email", width: "22%" },
+                            { head: "Phone", width: "12%" },
+                            { head: "City", width: "10%" },
+                            { head: "Assigned_to", width: "12%" },
+                            { head: "Follow_up", width: "10%" },
+                            { head: "Status", width: "10%" },
+                            { head: "Date Creates", width: "12%" },
+                            { head: "Action", width: "10%" },
+                          ].map((col, i) => (
                             <th
                               key={i}
                               style={{
+                                width: col.width,
                                 padding: "10px",
                                 border: "1px solid #333",
                                 backgroundColor: "#1a1a1a",
                                 fontWeight: "bold",
                                 textAlign: "center",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
                               }}
                             >
-                              {head}
+                              {col.head}
                             </th>
                           ))}
                         </tr>
@@ -662,7 +737,7 @@ const Dashboard = () => {
                       <tbody>
                         {students
                           .filter((s) => s.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-                        (statusFilter === "" || s.Status ===statusFilter))
+                            (statusFilter === "" || s.Status === statusFilter))
                           .map((student, index) => (
                             <tr key={index}>
                               {[
@@ -670,7 +745,7 @@ const Dashboard = () => {
                                 student.email,
                                 student.phone,
                                 student.city,
-                               // student.address,
+
                                 student.Assigned_to,
                                 student.Follow_up,
 
@@ -686,7 +761,7 @@ const Dashboard = () => {
                                   {val}
                                 </td>
                               ))}
-                              <td style={{ textAlign: "center" }}>
+                              <td style={{ textAlign: "center", }}>
                                 <button
                                   onClick={() => handleDeleteLead(index)}
                                   style={{
@@ -696,6 +771,7 @@ const Dashboard = () => {
                                     color: "white",
                                     borderRadius: "4px",
                                     cursor: "pointer",
+                                    margin: "0 4px",
                                   }}
                                 >
                                   <MdDelete />
@@ -709,9 +785,24 @@ const Dashboard = () => {
                                     color: "white",
                                     borderRadius: "4px",
                                     cursor: "pointer",
+                                    margin: "0 4px",
                                   }}
                                 >
                                   <CiEdit />
+                                </button>
+                                <button
+                                  onClick={() => window.open(`https://wa.me/${student.phone}`, "_blank")}
+                                  style={{
+                                    padding: "3px 7px",
+                                    backgroundColor: "#44ff6d",
+                                    border: "none",
+                                    color: "white",
+                                    borderRadius: "4px",
+                                    cursor: "pointer",
+                                    margin: "0 4px",
+                                  }}
+                                >
+                                  <FaWhatsapp />
                                 </button>
                               </td>
                             </tr>
@@ -880,21 +971,28 @@ const Dashboard = () => {
                       <span style={{ color: "red", fontSize: "12px" }}>{errors.Status}</span>
                     )}
 
-
-                    <input
-                      type="text"
+                    <select
                       name="Assigned_to"
-                      placeholder="Assigned To"
                       value={leadDetails.Assigned_to}
                       onChange={handleChange}
-                      style={{
-                        ...formInput,
-                        border: errors.Assigned_to ? "1px solid red" : "1px solid #ccc",
-                      }}
-                    />
+                      style={formInput}
+                    >
+                      <option value="">Select Employee</option>
+
+                      {employeeNameList.map((emp, i) => (
+                        <option key={i} value={emp}>
+                          {emp}
+                        </option>
+                      ))}
+                    </select>
+
                     {errors.Assigned_to && (
-                      <span style={{ color: "red", fontSize: "12px" }}>{errors.Assigned_to}</span>
+                      <span style={{ color: "red", fontSize: "12px" }}>
+                        {errors.Assigned_to}
+                      </span>
                     )}
+
+
 
                     <input
                       type="text"
@@ -940,11 +1038,422 @@ const Dashboard = () => {
                         fontWeight: "bold",
                       }}
                     >
-                    Save Lead
+                      Save Lead
                     </button>
                     <button
                       type="button"
                       onClick={() => setActiveStudentPage("list")}
+                      style={{
+                        padding: "10px 20px",
+                        backgroundColor: "#00ffb3",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Cancel
+                    </button>
+
+                  </div>
+                </form>
+              </div>
+            )}
+          </>
+        )}
+        {/*  this is  for Employees*/}
+        {activeSection === "employees" && (
+          <>
+            {/* TOP BAR */}
+            {activeEmployeePage === "list" && (
+              <>
+                <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
+
+
+                  <button
+                    onClick={() => setActiveEmployeePage("add")}
+                    style={{
+                      padding: "10px 20px",
+                      backgroundColor: "#292768",
+                      border: "none",
+                      color: "white",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Add Employee
+                  </button>
+                </div>
+
+                {/* EMPLOYEE TABLE */}
+                <div style={{ backgroundColor: "#0d0d0d", padding: "15px", borderRadius: "10px" }}>
+                  {employees.length === 0 ? (
+                    <p style={{ color: "gray" }}>No employees added yet.</p>
+                  ) : (
+                    <table
+                      style={{
+                        width: "100%",
+                        borderCollapse: "collapse",
+                        tableLayout: "fixed",
+                        textAlign: "left",
+                        backgroundColor: "#111",
+                        color: "white",
+                      }}
+                    >
+
+                      <thead>
+                        <tr>
+                          {[
+                            { head: "First Name", width: "10%" },
+                            { head: "Last Name", width: "10%" },
+                            { head: "Email", width: "18%" },
+                            { head: "Password", width: "10%" },
+                            { head: "DOB", width: "10%" },
+                            { head: "DOJ", width: "10%" },
+                            { head: "Remark", width: "12%" },
+                            { head: "Join Time", width: "10%" },
+                            { head: "Designation", width: "10%" },
+                            { head: "Address", width: "15%" },
+                            { head: "Action", width: "8%" },
+                          ].map((col, i) => (
+                            <th
+                              key={i}
+                              style={{
+                                width: col.width,
+                                padding: "10px",
+                                border: "1px solid #333",
+                                backgroundColor: "#1a1a1a",
+                                fontWeight: "bold",
+                                textAlign: "center",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {col.head}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {employees
+                          .filter((e) =>
+                            e.firstName.toLowerCase().includes(searchQuery.toLowerCase())
+                          )
+                          .map((emp, index) => (
+                            <tr key={index}>
+                              {[
+                                emp.firstName,
+                                emp.lastName,
+                                emp.email,
+                                emp.password,
+                                emp.dob,
+                                emp.doj,
+                                emp.remark,
+                                emp.joinTime,
+                                emp.designation,
+                                emp.address,
+                              ].map((value, idx) => (
+                                <td
+                                  key={idx}
+                                  style={{
+                                    padding: "10px",
+                                    border: "1px solid #333",
+                                    textAlign: "center",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  {value}
+                                </td>
+                              ))}
+
+                              {/* ACTION BUTTONS */}
+                              <td
+                                style={{
+                                  padding: "15px",
+                                  border: "1px solid #333",
+                                  textAlign: "center",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                  }}
+                                >
+                                  <button
+                                    onClick={() => handleEmployeeEdit(index)}
+                                    style={{
+                                      padding: "3px 7px",
+                                      backgroundColor: "#44e9ff",
+                                      borderRadius: "4px",
+                                      margin: "0 4px",
+                                      border: "none",
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    <CiEdit />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteEmployee(index)}
+                                    style={{
+                                      padding: "3px 7px",
+                                      backgroundColor: "#ff4444",
+                                      border: "none",
+                                      color: "white",
+                                      borderRadius: "4px",
+                                      cursor: "pointer",
+                                      margin: "0 4px",
+                                    }}
+                                  >
+                                    <MdDelete />
+                                  </button>
+
+
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+
+                    </table>
+
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* ADD EMPLOYEE PAGE */}
+            {activeEmployeePage === "add" && (
+              <div style={{ backgroundColor: "#0d0d0d", padding: "20px", borderRadius: "12px" }}>
+                <h3 style={{ marginBottom: "20px" }}>Add New Employee</h3>
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+
+                    // Backend API call
+                    const res = await fetch("http://localhost:5000/api/employees/add", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(employeeDetails),
+                    });
+                    const data = await res.json();
+
+                    if (editIndex !== null) {
+                      // EDIT EXISTING
+                      setEmployees((prev) =>
+                        prev.map((item, i) => (i === editIndex ? employeeDetails : item))
+                      );
+                      setEditIndex(null);
+                      Toast.fire({ icon: "success", title: "Employee Updated Successfully!" });
+                    } else {
+                      // ADD NEW EMPLOYEE
+                      setEmployees((prev) => [...prev, employeeDetails]);
+                      Toast.fire({ icon: "success", title: "Employee Added Successfully!" });
+                    }
+
+                    // RESET FORM
+                    setEmployeeDetails({
+                      firstName: "",
+                      lastName: "",
+                      email: "",
+                      password: "",
+                      dob: "",
+                      doj: "",
+                      remark: "",
+                      joinTime: "",
+                      designation: "",
+                      address: "",
+                    });
+
+                    setActiveEmployeePage("list"); // Form close kar de
+                  }}
+
+                >
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+                    {/* LEFT COLUMN */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+                      <input
+                        type="text"
+                        name="firstName"
+                        placeholder="First Name"
+                        value={employeeDetails.firstName}
+                        onChange={handleEmployeeChange}
+                        style={{
+                          ...formInput,
+                          border: errors.firstName ? "1px solid red" : "1px solid #ccc",
+                        }}
+                      />
+                      {errors.firstName && (
+                        <span style={{ color: "red", fontSize: "12px" }}>{errors.firstName}</span>
+                      )}
+
+                      <input
+                        type="text"
+                        name="lastName"
+                        placeholder="Last Name"
+                        value={employeeDetails.lastName}
+                        onChange={handleEmployeeChange}
+                        style={{
+                          ...formInput,
+                          border: errors.lastName ? "1px solid red" : "1px solid #ccc",
+                        }}
+                      />
+                      {errors.lastName && (
+                        <span style={{ color: "red", fontSize: "12px" }}>{errors.lastName}</span>
+                      )}
+
+                      <input
+                        type="email"
+                        name="email"
+                        placeholder="Email"
+                        value={employeeDetails.email}
+                        onChange={handleEmployeeChange}
+                        style={{
+                          ...formInput,
+                          border: errors.email ? "1px solid red" : "1px solid #ccc",
+                        }}
+                      />
+                      {errors.email && (
+                        <span style={{ color: "red", fontSize: "12px" }}>{errors.email}</span>
+                      )}
+
+                      <input
+                        type="password"
+                        name="password"
+                        placeholder="Password"
+                        value={employeeDetails.password}
+                        onChange={handleEmployeeChange}
+                        style={{
+                          ...formInput,
+                          border: errors.password ? "1px solid red" : "1px solid #ccc",
+                        }}
+                      />
+                      {errors.password && (
+                        <span style={{ color: "red", fontSize: "12px" }}>{errors.password}</span>
+                      )}
+                      <textarea
+                        name="remark"
+                        placeholder="Remark"
+                        value={employeeDetails.remark}
+                        onChange={handleEmployeeChange}
+                        style={{
+                          ...formInput,
+                          height: "80px",
+                          border: errors.remark ? "1px solid red" : "1px solid #ccc",
+                        }}
+                      />
+                      {errors.remark && (
+                        <span style={{ color: "red", fontSize: "12px" }}>{errors.remark}</span>
+                      )}
+
+
+                    </div>
+                    {/* Right Column*/}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+                      <input
+                        type="date"
+                        name="doj"
+                        placeholder="Date of Joining"
+                        value={employeeDetails.doj}
+                        onChange={handleEmployeeChange}
+                        style={{
+                          ...formInput,
+                          border: errors.doj ? "1px solid red" : "1px solid #ccc",
+                        }}
+                      />
+                      {errors.doj && (
+                        <span style={{ color: "red", fontSize: "12px" }}>{errors.doj}</span>
+                      )}
+
+                      <input
+                        type="time"
+                        name="joinTime"
+                        placeholder="Join Time"
+                        value={employeeDetails.joinTime}
+                        onChange={handleEmployeeChange}
+                        style={{
+                          ...formInput,
+                          border: errors.joinTime ? "1px solid red" : "1px solid #ccc",
+                        }}
+                      />
+                      {errors.joinTime && (
+                        <span style={{ color: "red", fontSize: "12px" }}>{errors.joinTime}</span>
+                      )}
+
+                      <input
+                        type="text"
+                        name="designation"
+                        placeholder="Designation"
+                        value={employeeDetails.designation}
+                        onChange={handleEmployeeChange}
+                        style={{
+                          ...formInput,
+                          border: errors.designation ? "1px solid red" : "1px solid #ccc",
+                        }}
+                      />
+                      {errors.designation && (
+                        <span style={{ color: "red", fontSize: "12px" }}>{errors.designation}</span>
+                      )}
+
+                      <textarea
+                        name="address"
+                        placeholder="Address"
+                        value={employeeDetails.address}
+                        onChange={handleEmployeeChange}
+                        style={{
+                          ...formInput,
+                          height: "80px",
+                          border: errors.address ? "1px solid red" : "1px solid #ccc",
+                        }}
+                      />
+                      {errors.address && (
+                        <span style={{ color: "red", fontSize: "12px" }}>{errors.address}</span>
+                      )} <input
+                        type="date"
+                        name="dob"
+                        placeholder="Date of Birth"
+                        value={employeeDetails.dob}
+                        onChange={handleEmployeeChange}
+                        style={{
+                          ...formInput,
+                          border: errors.dob ? "1px solid red" : "1px solid #ccc",
+                        }}
+                      />
+                      {errors.dob && (
+                        <span style={{ color: "red", fontSize: "12px" }}>{errors.dob}</span>
+                      )}
+
+
+                    </div>
+                  </div>
+
+                  {/* BUTTONS */}
+                  <div style={{ gridColumn: "1 / 3", display: "flex", gap: "10px" }}>
+
+                    <button
+                      onClick={handleEmployeeSubmit}  // <-- Add this
+                      style={{
+                        padding: "10px 20px",
+                        backgroundColor: "#ff000d",
+                        color: "black",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Save Employee
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveEmployeePage("list")}
                       style={{
                         padding: "10px 20px",
                         backgroundColor: "#00ffb3",
@@ -963,6 +1472,7 @@ const Dashboard = () => {
             )}
           </>
         )}
+
       </main>
     </div>
   );
@@ -1000,5 +1510,7 @@ const formInput = {
   borderRadius: "6px",
   color: "white",
 };
+
+
 
 export default Dashboard;
