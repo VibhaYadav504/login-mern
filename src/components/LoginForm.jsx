@@ -12,6 +12,7 @@ const LoginForm = () => {
     const [errors, setErrors] = useState({});
     const [isHover, setIsHover] = useState(false);
     const [isActive, setIsActive] = useState(false);
+const [loading, setLoading] = useState(false);
 
     const validateForm = () => {
         let newErrors = {};
@@ -28,40 +29,47 @@ const LoginForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
+          setLoading(true);
 
         try {
-            const res = await fetch("http://localhost:5000/api/auth/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username: email, password })
+            const res = await fetch("http://localhost:5000/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("user", JSON.stringify(data.user));
+
+            Swal.fire({
+                icon: "success",
+                title: "Login Successful!",
+                text: "Welcome Back!",
+                timer: 2000,
+                showConfirmButton: false
             });
 
-            const data = await res.json();
-
-            if (res.ok) {
-                // SweetAlert for success
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success!',
-                    text: 'User Registered Successfully',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                toast.success("Redirecting to login...", { autoClose: 3000 });
-                setTimeout(() => navigate("/dashboard"), 2000); // Example redirect
-            } else {
-                // SweetAlert for backend error
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: data.error || 'Something went wrong'
-                });
-            }
-        } catch (err) {
-            console.log(err);
-            toast.error("Backend not reachable!");
+            setTimeout(() => navigate("/dashboard"), 1500);
+        } else {
+            Swal.fire({
+                icon: "error",
+                title: "Login Failed",
+                text: data.error || "Invalid credentials"
+            });
         }
-    };
+    } catch (err) {
+        console.log(err);
+        toast.error("Backend not reachable!");
+    }
+    finally {
+    setLoading(false); 
+  }
+};
+           
 
     return (
         <>
@@ -152,25 +160,27 @@ const LoginForm = () => {
                     {errors.password && <p style={{ color: "red", fontSize: "16px", marginBottom: "10px" }}>{errors.password}</p>}
 
                     {/* Submit Button */}
-                    <button type="submit"
-                        onMouseEnter={() => setIsHover(true)}
-                        onMouseLeave={() => { setIsHover(false); setIsActive(false); }}
-                        onMouseDown={() => setIsActive(true)}
-                        onMouseUp={() => setIsActive(false)}
-                        style={{
-                            width: "290px",
-                            padding: "10px",
-                            background: isActive ? "#3d4daa" : isHover ? "#1e1c3a" : "#6e8efb",
-                            color: "#fff",
-                            fontSize: "16px",
-                            borderRadius: "0px",
-                            border: "1px solid #333",
-                            cursor: "pointer",
-                            transition: "0.3s",
-                            transform: isHover ? "scale(1.05)" : "scale(1)",
-                        }}>
-                        Login
-                    </button>
+                   <button type="submit"
+    disabled={loading} // <-- disable while loading
+    onMouseEnter={() => setIsHover(true)}
+    onMouseLeave={() => { setIsHover(false); setIsActive(false); }}
+    onMouseDown={() => setIsActive(true)}
+    onMouseUp={() => setIsActive(false)}
+    style={{
+        width: "290px",
+        padding: "10px",
+        background: isActive ? "#3d4daa" : isHover ? "#1e1c3a" : "#6e8efb",
+        color: "#fff",
+        fontSize: "16px",
+        borderRadius: "0px",
+        border: "1px solid #333",
+        cursor: "pointer",
+        transition: "0.3s",
+        transform: isHover ? "scale(1.05)" : "scale(1)",
+    }}>
+    {loading ? "Logging in..." : "Login"}  {/* <-- show loading text */}
+</button>
+
                 </form>
             </div>
 

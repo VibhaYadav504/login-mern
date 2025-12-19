@@ -34,6 +34,7 @@ const Toast = Swal.mixin({
 )
 
 const Dashboard = () => {
+
   const tdStyle = {
     padding: "8px",
     borderBottom: "1px solid #333",
@@ -46,6 +47,7 @@ const Dashboard = () => {
     borderBottom: "1px solid #333",
     color: "#ccc",
   };
+
 
   const [activeSection, setActiveSection] = useState("dashboard");
   const [students, setStudents] = useState([]);
@@ -1272,7 +1274,7 @@ const Dashboard = () => {
                       address: "",
                     });
 
-                    setActiveEmployeePage("list"); // Form close kar de
+                    setActiveEmployeePage("list");
                   }}
 
                 >
