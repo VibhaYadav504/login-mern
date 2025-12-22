@@ -42,7 +42,7 @@ const [loading, setLoading] = useState(false);
 
         if (res.ok) {
           
-            localStorage.setItem("token", data.token);
+           
             localStorage.setItem("user", JSON.stringify(data.user));
 
             Swal.fire({
@@ -161,7 +161,7 @@ const [loading, setLoading] = useState(false);
 
                     {/* Submit Button */}
                    <button type="submit"
-    disabled={loading} // <-- disable while loading
+    disabled={loading} 
     onMouseEnter={() => setIsHover(true)}
     onMouseLeave={() => { setIsHover(false); setIsActive(false); }}
     onMouseDown={() => setIsActive(true)}
@@ -178,7 +178,7 @@ const [loading, setLoading] = useState(false);
         transition: "0.3s",
         transform: isHover ? "scale(1.05)" : "scale(1)",
     }}>
-    {loading ? "Logging in..." : "Login"}  {/* <-- show loading text */}
+    {loading ? "Logging in..." : "Login"} 
 </button>
 
                 </form>

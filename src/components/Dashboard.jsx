@@ -348,9 +348,10 @@ const Dashboard = () => {
             <button style={menuBtn}>
               <FaQuestionCircle /> Support
             </button>
-            <button style={menuBtn}>
-              <FaSignOutAlt /> Logout
-            </button>
+            <button style={menuBtn} onClick={handleLogout}>
+  <FaSignOutAlt /> Logout
+</button>
+
             <button style={menuBtn}>
               <MdPolicy /> Privacy Policy
             </button>
